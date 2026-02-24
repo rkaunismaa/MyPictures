@@ -1,0 +1,8 @@
+.mypictures/
+__pycache__/
+.env
+*.pyc
+*.pyo
+.venv/
+dist/
+*.egg-info/

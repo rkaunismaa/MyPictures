@@ -1,0 +1,21 @@
+[project]
+name = "mypictures"
+version = "0.1.0"
+description = "Local photo search system with CLIP embeddings and pgvector"
+requires-python = ">=3.10"
+dependencies = [
+    "open-clip-torch",
+    "psycopg[binary]",
+    "pgvector",
+    "piexif",
+    "tqdm",
+    "torch",
+    "Pillow",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []
