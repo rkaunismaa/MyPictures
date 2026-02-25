@@ -16,10 +16,12 @@ import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
+import numpy as np
 import piexif
 import psycopg
 import torch
 import open_clip
+from pgvector.psycopg import register_vector
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
 
@@ -278,6 +280,7 @@ def main():
 
     print("Connecting to database...")
     conn = psycopg.connect(get_conn_str())
+    register_vector(conn)
 
     print("Fetching already-indexed paths and hashes...")
     existing_paths, existing_hashes = fetch_existing(conn)
@@ -310,7 +313,7 @@ def main():
         embeddings = embed_images(model, preprocess, batch_imgs, device)
         records = []
         for meta, emb in zip(batch_meta, embeddings):
-            meta["embedding"] = emb
+            meta["embedding"] = np.array(emb, dtype=np.float32)
             records.append(meta)
         upsert_batch(conn, records)
         n_new += len(records)

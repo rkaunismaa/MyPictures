@@ -12,9 +12,11 @@ import argparse
 import sys
 from datetime import datetime, timezone
 
+import numpy as np
 import psycopg
 import torch
 import open_clip
+from pgvector.psycopg import register_vector
 
 from config import (
     DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD,
@@ -51,19 +53,21 @@ def encode_text(model, tokenizer, query: str, device) -> list[float]:
 def search(conn, embedding: list[float], limit: int,
            after: datetime | None,
            before: datetime | None) -> list[dict]:
-    conditions = []
-    params: list = [embedding]
+    register_vector(conn)
+
+    date_conditions = []
+    date_params = []
 
     if after:
-        conditions.append(f"date_taken >= ${len(params) + 1}")
-        params.append(after)
+        date_conditions.append("date_taken >= %s")
+        date_params.append(after)
     if before:
-        conditions.append(f"date_taken <= ${len(params) + 1}")
-        params.append(before)
+        date_conditions.append("date_taken <= %s")
+        date_params.append(before)
 
-    where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
-    params.append(limit)
+    where_clause = ("WHERE " + " AND ".join(date_conditions)) if date_conditions else ""
 
+    # embedding appears twice (%s #1 in SELECT, %s #last in ORDER BY)
     query = f"""
         SELECT
             file_path,
@@ -72,12 +76,14 @@ def search(conn, embedding: list[float], limit: int,
             camera_model,
             gps_latitude,
             gps_longitude,
-            1 - (embedding <=> $1) AS similarity
+            1 - (embedding <=> %s) AS similarity
         FROM photos
         {where_clause}
-        ORDER BY embedding <=> $1
-        LIMIT ${len(params)}
+        ORDER BY embedding <=> %s
+        LIMIT %s
     """
+    vec = np.array(embedding, dtype=np.float32)
+    params = [vec] + date_params + [vec, limit]
 
     with conn.cursor() as cur:
         cur.execute(query, params)
