@@ -53,11 +53,15 @@ app = FastAPI(title="MyPictures", lifespan=lifespan)
 # Request / response models
 # ---------------------------------------------------------------------------
 
+MIN_SIMILARITY = 0.2
+
+
 class SearchRequest(BaseModel):
     query: str
     limit: int = 20
     after: Optional[str] = None   # "YYYY-MM-DD"
     before: Optional[str] = None  # "YYYY-MM-DD"
+    min_similarity: float = MIN_SIMILARITY
 
 
 def _parse_date(s: str) -> datetime:
@@ -92,11 +96,15 @@ async def api_search(req: SearchRequest):
             rows = search(conn, embedding, req.limit, after=after, before=before)
         finally:
             conn.close()
-        # Serialise datetime objects
+        # Filter out low-similarity results and serialise datetime objects
+        filtered = []
         for row in rows:
+            if row.get("similarity") is not None and row["similarity"] < req.min_similarity:
+                continue
             if isinstance(row.get("date_taken"), datetime):
                 row["date_taken"] = row["date_taken"].isoformat()
-        return rows
+            filtered.append(row)
+        return filtered
 
     try:
         results = await loop.run_in_executor(None, _db_search)

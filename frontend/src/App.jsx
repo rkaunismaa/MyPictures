@@ -79,6 +79,35 @@ const css = `
   .search-btn:hover { background: #5a8fdb; }
   .search-btn:disabled { background: #334; cursor: default; }
 
+  .limit-select {
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #252525;
+    color: #eee;
+    font-size: 0.85rem;
+    outline: none;
+    cursor: pointer;
+  }
+  .limit-select:focus { border-color: #666; }
+
+  .similarity-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .similarity-slider {
+    width: 80px;
+    accent-color: #4a7fcb;
+    cursor: pointer;
+  }
+  .similarity-value {
+    font-size: 0.8rem;
+    color: #7cb9e8;
+    min-width: 32px;
+    font-weight: 600;
+  }
+
   /* ---- Status bar ---- */
   .status {
     max-width: 1400px;
@@ -229,6 +258,8 @@ export default function App() {
   const [query, setQuery] = useState('')
   const [after, setAfter] = useState('')
   const [before, setBefore] = useState('')
+  const [limit, setLimit] = useState(20)
+  const [minSimilarity, setMinSimilarity] = useState(0.2)
   const [results, setResults] = useState([])
   const [status, setStatus] = useState('')
   const [isError, setIsError] = useState(false)
@@ -249,7 +280,7 @@ export default function App() {
     setResults([])
 
     try {
-      const body = { query: query.trim(), limit: 20 }
+      const body = { query: query.trim(), limit, min_similarity: minSimilarity }
       if (after) body.after = after
       if (before) body.before = before
 
@@ -275,7 +306,7 @@ export default function App() {
     } finally {
       setLoading(false)
     }
-  }, [query, after, before])
+  }, [query, after, before, limit, minSimilarity])
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') doSearch()
@@ -310,6 +341,30 @@ export default function App() {
             value={before}
             onChange={(e) => setBefore(e.target.value)}
           />
+          <span className="date-label">Show</span>
+          <select
+            className="limit-select"
+            value={limit}
+            onChange={(e) => setLimit(Number(e.target.value))}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+          </select>
+          <div className="similarity-group">
+            <span className="date-label">Min</span>
+            <input
+              className="similarity-slider"
+              type="range"
+              min="0"
+              max="0.5"
+              step="0.05"
+              value={minSimilarity}
+              onChange={(e) => setMinSimilarity(Number(e.target.value))}
+            />
+            <span className="similarity-value">{(minSimilarity * 100).toFixed(0)}%</span>
+          </div>
           <button className="search-btn" onClick={doSearch} disabled={loading}>
             {loading ? 'Searching…' : 'Search'}
           </button>
