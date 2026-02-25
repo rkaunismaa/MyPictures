@@ -11,6 +11,9 @@ dependencies = [
     "tqdm",
     "torch",
     "Pillow",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
 ]
 
 [build-system]
