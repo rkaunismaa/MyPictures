@@ -79,13 +79,18 @@ async def api_search(req: SearchRequest):
 
     loop = asyncio.get_event_loop()
 
+    # Short queries benefit from CLIP prompt engineering
+    query = req.query.strip()
+    if len(query.split()) <= 3 and not query.lower().startswith("a photo"):
+        query = f"a photo of {query}"
+
     # Encode text in thread pool (GPU/CPU bound)
     embedding = await loop.run_in_executor(
         None,
         encode_text,
         app.state.model,
         app.state.tokenizer,
-        req.query,
+        query,
         app.state.device,
     )
 

@@ -19,7 +19,7 @@ DBeaver (GUI browser):
 import sys
 import psycopg
 from psycopg.rows import dict_row
-from config import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+from config import DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD, EMBEDDING_DIM
 
 
 def get_conn_str(dbname="postgres"):
@@ -73,7 +73,7 @@ def setup_schema():
             print("pgvector extension enabled.")
 
             # Create photos table
-            cur.execute("""
+            cur.execute(f"""
                 CREATE TABLE IF NOT EXISTS photos (
                     id              SERIAL PRIMARY KEY,
                     file_path       TEXT UNIQUE NOT NULL,
@@ -97,7 +97,7 @@ def setup_schema():
                     gps_latitude    DOUBLE PRECISION,
                     gps_longitude   DOUBLE PRECISION,
                     gps_altitude    DOUBLE PRECISION,
-                    embedding       vector(768)
+                    embedding       vector({EMBEDDING_DIM})
                 )
             """)
             print("Table 'photos' ready.")
