@@ -102,15 +102,13 @@ def setup_schema():
             """)
             print("Table 'photos' ready.")
 
-            # IVFFlat index on embedding (requires data to be present first;
-            # safe to create now — will be used once rows are inserted)
+            # HNSW index on embedding (better recall than IVFFlat)
             cur.execute("""
                 CREATE INDEX IF NOT EXISTS photos_embedding_idx
                 ON photos
-                USING ivfflat (embedding vector_cosine_ops)
-                WITH (lists = 100)
+                USING hnsw (embedding vector_cosine_ops)
             """)
-            print("IVFFlat index on embedding ready.")
+            print("HNSW index on embedding ready.")
 
             # Index on file_hash for dedup lookups
             cur.execute("""

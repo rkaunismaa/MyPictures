@@ -102,6 +102,30 @@ Open http://localhost:8000
 | Layer | Technology |
 |---|---|
 | Embeddings | OpenCLIP ViT-L/14 (laion2b_s32b_b82k) |
-| Vector DB | PostgreSQL 14 + pgvector |
+| Vector DB | PostgreSQL 14 + pgvector (HNSW index) |
 | Backend | FastAPI + uvicorn |
 | Frontend | React 18 + Vite 5 |
+
+## Search Tips
+
+- **Use natural language** — "a dog playing in the snow" works much better than "dog". Short queries (3 words or fewer) are automatically prefixed with "a photo of" for better results.
+- **Adjust the similarity slider** — the "Min" slider in the UI filters out low-relevance results. Lower it to see more results, raise it to keep only strong matches.
+- **Date filters** — use the "From" and "To" fields to narrow results to a date range.
+
+## Changing the CLIP Model
+
+The model can be swapped by editing `config.py`:
+
+```python
+CLIP_MODEL = "ViT-L-14"          # or "ViT-H-14", "ViT-bigG-14"
+CLIP_PRETRAINED = "laion2b_s32b_b82k"
+EMBEDDING_DIM = 768               # 1024 for ViT-H, 1280 for bigG
+```
+
+Then migrate and re-index (this re-embeds all photos):
+```bash
+python migrate_embedding_dim.py
+python indexer.py
+```
+
+> **Note:** The pgvector index type matters significantly for search quality. This project uses HNSW (~99% recall). IVFFlat with default settings gives very poor results.

@@ -25,9 +25,9 @@ DB_NAME = os.environ.get("DB_NAME", "mypictures")
 DB_USER = os.environ.get("DB_USER", "postgres")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "")
 
-CLIP_MODEL = "ViT-H-14"
-CLIP_PRETRAINED = "laion2b_s32b_b79k"
-EMBEDDING_DIM = 1024
+CLIP_MODEL = "ViT-L-14"
+CLIP_PRETRAINED = "laion2b_s32b_b82k"
+EMBEDDING_DIM = 768
 BATCH_SIZE = 32
 
 IMAGE_EXTENSIONS = {

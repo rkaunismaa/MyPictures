@@ -30,7 +30,8 @@ MyPictures/
 ## Database
 - Host: localhost:5432, DB: `mypictures`, User: postgres
 - Credentials in `.env` (loaded by `config.py` at import time)
-- Table: `photos` with `embedding vector(768)`, IVFFlat cosine index
+- Table: `photos` with `embedding vector(768)`, HNSW cosine index
+- `migrate_embedding_dim.py` — migration script for switching CLIP models (deletes rows, resizes column, recreates index)
 
 ## Common Commands
 
@@ -65,8 +66,19 @@ python -m uvicorn app:app --host 0.0.0.0 --port 8000
 
 ## Key Config (config.py)
 - `SCAN_PATHS` — directories to index (edit to add/remove photo locations)
-- `CLIP_MODEL` / `CLIP_PRETRAINED` — change to swap CLIP variant
+- `CLIP_MODEL` / `CLIP_PRETRAINED` / `EMBEDDING_DIM` — change to swap CLIP variant
 - All DB settings overridable via environment variables or `.env`
+
+## Switching CLIP models
+1. Update `CLIP_MODEL`, `CLIP_PRETRAINED`, and `EMBEDDING_DIM` in `config.py`
+2. Run `python migrate_embedding_dim.py` (drops all rows, resizes column, recreates HNSW index)
+3. Run `python indexer.py` to re-embed all photos
+- ViT-H/14 (1024-dim) was tested but did not improve over ViT-L/14 (768-dim); reverted
+
+## Search accuracy notes
+- **HNSW index is critical** — IVFFlat with default `probes=1` only searches ~1% of data, giving terrible recall. HNSW gives ~99% recall out of the box. Never use IVFFlat without tuning probes.
+- **CLIP prompt engineering** — short queries (<=3 words) are auto-prefixed with "a photo of" in `app.py`, which significantly improves CLIP accuracy (e.g. "cat" → "a photo of cat")
+- **Min similarity filter** — UI slider (default 20%) filters low-relevance results; adjustable per search
 
 ## Notes
 - pgvector was built from source — the apt package `postgresql-14-pgvector` is unavailable in default repos

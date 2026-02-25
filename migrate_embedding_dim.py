@@ -42,11 +42,10 @@ def main():
     print(f"  Resizing column to vector({EMBEDDING_DIM})...")
     cur.execute(f"ALTER TABLE photos ALTER COLUMN embedding TYPE vector({EMBEDDING_DIM})")
 
-    print("  Recreating IVFFlat index...")
+    print("  Recreating HNSW index...")
     cur.execute("""
         CREATE INDEX photos_embedding_idx
-        ON photos USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100)
+        ON photos USING hnsw (embedding vector_cosine_ops)
     """)
 
     conn.close()
